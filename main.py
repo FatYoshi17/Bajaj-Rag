@@ -19,6 +19,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
+API_Key=os.getenv("GOOGLE_API_KEY")
 # --- Logging Configuration ---
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -190,7 +191,7 @@ async def startup_event():
     """Initializes the RAG system when the server starts."""
     try:
         # Use the provided API key as the default, but allow override via environment variable
-        gemini_api_key = os.getenv("GOOGLE_API_KEY", "AIzaSyBzZSJ2b60YLpcSF_Job0D__rMwbcCZS8g")
+        gemini_api_key = os.getenv("GOOGLE_API_KEY")
         if not gemini_api_key:
             logger.error("❌ GOOGLE_API_KEY not found as an env variable or in the code.")
             return
