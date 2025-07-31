@@ -8,7 +8,6 @@ Rag1.ipynb
 # Ignore other directories and files
 6.0.0
 __pycache__/
-faiss_layer1_db/
 
 # Ignore large parts of the virtual environment but keep the essential structure
 bajaj/Lib/site-packages/
