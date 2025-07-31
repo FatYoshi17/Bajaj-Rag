@@ -17,8 +17,27 @@ This project implements a Retrieval-Augmented Generation (RAG) pipeline tailored
    git clone https://github.com/FatYoshi17/Bajaj-Rag.git
    cd Bajaj-Rag
 
-2.python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+Create and activate a virtual environment
+
+Linux/macOS
+
+bash
+Copy
+Edit
+python -m venv venv
+source venv/bin/activate
+Windows
+
+bash
+Copy
+Edit
+python -m venv venv
+venv\Scripts\activate
+Install dependencies
+
+bash
+Copy
+Edit
 pip install -r requirements.txt
 
 ## 🔧 Tech Stack
