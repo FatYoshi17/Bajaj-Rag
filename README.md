@@ -17,10 +17,15 @@ This project implements a Retrieval-Augmented Generation (RAG) pipeline tailored
    git clone https://github.com/FatYoshi17/Bajaj-Rag.git
    cd Bajaj-Rag
 
-📁 Bajaj-Rag/
-├── main.py                # FastAPI app
-├── rag_utils.py           # Retrieval and generation logic
-├── ingest.py              # Document ingestion and vector indexing
-├── faiss_store/           # Stored vector DB
-├── data/                  # Sample insurance documents
-└── requirements.txt
+2.python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+## 🔧 Tech Stack
+
+- **LLMs**: OpenAI GPT, Google Gemini, HuggingFace Transformers
+- **Embeddings**: `sentence-transformers/all-MiniLM-L6-v2`
+- **Vector Store**: FAISS
+- **Sparse Retriever**: BM25
+- **Frameworks**: LangChain, FastAPI, PyPDF2
+
