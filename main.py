@@ -8,6 +8,33 @@ import tempfile
 import logging
 from typing import List
 
+# Load environment variables from .env file manually
+def load_env_file():
+    """Load environment variables from .env file without python-dotenv dependency."""
+    try:
+        if os.path.exists('.env'):
+            # Try different encodings to handle BOM and various file formats
+            encodings = ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252']
+            for encoding in encodings:
+                try:
+                    with open('.env', 'r', encoding=encoding) as f:
+                        for line in f:
+                            line = line.strip()
+                            if line and not line.startswith('#') and '=' in line:
+                                key, value = line.split('=', 1)
+                                os.environ[key.strip()] = value.strip()
+                    break  # If successful, break out of the encoding loop
+                except UnicodeDecodeError:
+                    continue  # Try next encoding
+    except Exception as e:
+        print(f"Warning: Could not load .env file: {e}")
+
+load_env_file()
+
+# Fallback: Set API key directly if not loaded from .env
+if not os.getenv("GOOGLE_API_KEY"):
+    os.environ["GOOGLE_API_KEY"] = "AIzaSyBzZSJ2b60YLpcSF_Job0D__rMwbcCZS8g"
+
 # LangChain imports
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
@@ -19,7 +46,6 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
-API_Key=os.getenv("GOOGLE_API_KEY")
 # --- Logging Configuration ---
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -75,15 +101,22 @@ class RAGSystem:
 
             if os.path.exists(layer1_db_path):
                 logger.info(f"   - Loading Layer 1 DB from {layer1_db_path}...")
-                db = FAISS.load_local(layer1_db_path, self.embedding, allow_dangerous_deserialization=True)
-                
-                docs = list(db.docstore._dict.values())
-                faiss_retriever = db.as_retriever(search_kwargs={"k": 5})
-                bm25_retriever = BM25Retriever.from_documents(docs)
-                bm25_retriever.k = 5
-                
-                self.layer1_retriever = EnsembleRetriever(retrievers=[bm25_retriever, faiss_retriever], weights=[0.5, 0.5])
-                logger.info("   - Layer 1 hybrid retriever created.")
+                try:
+                    db = FAISS.load_local(layer1_db_path, self.embedding, allow_dangerous_deserialization=True)
+                    
+                    docs = list(db.docstore._dict.values())
+                    faiss_retriever = db.as_retriever(search_kwargs={"k": 5})
+                    bm25_retriever = BM25Retriever.from_documents(docs)
+                    bm25_retriever.k = 5
+                    
+                    self.layer1_retriever = EnsembleRetriever(retrievers=[bm25_retriever, faiss_retriever], weights=[0.5, 0.5])
+                    logger.info("   - Layer 1 hybrid retriever created.")
+                except UnicodeDecodeError as e:
+                    logger.error(f"   - Unicode error loading FAISS database: {e}")
+                    raise FileNotFoundError(f"Error loading Layer 1 database: Unicode encoding issue")
+                except Exception as e:
+                    logger.error(f"   - Error loading FAISS database: {e}")
+                    raise FileNotFoundError(f"Error loading Layer 1 database: {e}")
             else:
                 raise FileNotFoundError(f"Layer 1 database not found at {layer1_db_path}")
 
@@ -221,8 +254,9 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     # Securely save the uploaded file to a temporary location
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-            tmp_file.write(file.file.read())
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", mode='wb') as tmp_file:
+            content = await file.read()
+            tmp_file.write(content)
             tmp_path = tmp_file.name
         
         logger.info(f"📄 PDF '{file.filename}' uploaded temporarily to '{tmp_path}'.")
